@@ -1,0 +1,231 @@
+import java.util.LinkedList;
+import java.util.Random;
+
+public class HopcroftKarp {
+	
+	static int m, n;
+	static Vertex[] graph;
+	
+	public static void main(String[] args){
+		
+		Random random = new Random();
+		
+		m = 6;
+		n = 6;
+		
+		graph = new Vertex[m+n];
+		
+		for(int i = 0; i<n+m; i++){
+			graph[i] = new Vertex();
+		}
+		/*
+		 * 
+		 * test run example
+		 * 
+		graph[0].adj.add(10);
+		graph[0].adj.add(9);
+		graph[0].adj.add(8);
+		graph[10].adj.add(0);
+		graph[9].adj.add(0);
+		graph[8].adj.add(0);
+		
+		graph[1].adj.add(9);
+		graph[1].adj.add(6);
+		graph[1].adj.add(7);
+		graph[9].adj.add(1);
+		graph[6].adj.add(1);
+		graph[7].adj.add(1);
+		
+		graph[2].adj.add(11);
+		graph[2].adj.add(10);
+		graph[11].adj.add(2);
+		graph[10].adj.add(2);
+		
+		graph[3].adj.add(10);
+		graph[10].adj.add(3);
+		
+		graph[4].adj.add(8);
+		graph[4].adj.add(10);
+		graph[8].adj.add(4);
+		graph[10].adj.add(4);
+		
+		graph[5].adj.add(10);
+		graph[5].adj.add(11);
+		graph[10].adj.add(5);
+		graph[11].adj.add(5);
+		*/
+	
+		//initialize graph adjacency list
+		for(int i=0; i<m; i++){
+			
+			int iterate = random.nextInt(3) + 1;
+			
+			for(int j = 0; j<iterate; j++){
+				
+				int r = random.nextInt(n) + m;
+				
+				if (!graph[i].adj.contains(r)){
+					graph[i].adj.add(r);
+					graph[r].adj.add(i);
+				}
+			}
+		}
+		
+		printGraph();
+		
+		System.out.println(maximalMatchings());
+		
+	}
+	
+	public static class Vertex{
+			
+		LinkedList<Integer> adj;
+		int match, parent, layer;
+		boolean seen;
+		
+		public Vertex(){
+			adj = new LinkedList<Integer>();
+			match = -1;
+			parent = -1;
+			layer = 0;
+			seen = false;
+		}
+		
+	}
+	
+	public static void printGraph(){
+		
+		int max = Math.max(m,n);
+		int min = Math.min(m,n);
+		
+		for(int i = 0; i<max; i++){
+			
+			System.out.print(i + ": ");
+			if (i<min){
+				System.out.println(graph[i].adj + "\t\t\t" + (i+min) + ": " + graph[(i+min)].adj);
+			}
+			else{
+				System.out.println(graph[i].adj);
+			}
+		}
+	}
+	
+public static void printGraphMatches(){
+		
+		int max = Math.max(m,n);
+		int min = Math.min(m,n);
+		
+		for(int i = 0; i<max; i++){
+			
+			System.out.print(i + ": ");
+			if (i<min){
+				System.out.println(graph[i].match + "\t\t\t" + (i+min) + ": " + graph[(i+min)].match);
+			}
+			else{
+				System.out.println(graph[i].match);
+			}
+		}
+	}
+	
+	
+	public static int maximalMatchings(){
+		
+		int matchings = 0;
+		
+		int pathEnd = bfs();
+		
+		while(pathEnd!=-1){
+			
+			createAugmentingPath(pathEnd);
+			printGraphMatches();
+			matchings++;
+			
+			pathEnd = bfs();
+			
+		}
+		
+		return matchings;
+	}
+	
+	public static int bfs(){
+		
+		LinkedList<Integer> list = new LinkedList<Integer>();
+		
+		//how many unmatched?
+		for(int i = 0; i<m+n; i++){
+			if (graph[i].match == -1 && i<m){
+				
+				list.add(i);
+				graph[i].seen = true;
+				graph[i].parent = i;
+				graph[i].layer = 0;
+			}
+			else{
+				graph[i].seen = false;
+			}
+		}
+		
+		
+		//Iterator iter = (Iterator) list.iterator();
+			
+		while(!list.isEmpty()){
+			
+			System.out.println(list);
+			
+			int i = list.get(0);
+			
+			list.remove(list.get(0));
+			
+			for(int e = 0; e<graph[i].adj.size(); e++){
+				int adjVer = graph[i].adj.get(e);
+				
+				if (!graph[adjVer].seen){
+					graph[adjVer].seen = true;
+					graph[adjVer].parent = i;
+					
+					graph[adjVer].layer = graph[i].layer + 1;
+						
+					if (graph[adjVer].match==-1){
+						System.out.println("found augmenting path to " + adjVer);
+						return adjVer;
+					}	
+					else{
+						int nextVertex = graph[adjVer].match;
+						graph[nextVertex].parent = adjVer;
+						graph[nextVertex].seen = true;
+						graph[nextVertex].layer = graph[adjVer].layer + 1;
+						
+						list.add(nextVertex);
+					}
+
+
+				}
+			}
+			
+		}
+		
+		
+		return -1;
+	}
+	
+	
+	public static void createAugmentingPath(int v){
+		
+		while(graph[v].parent!=v){
+			
+			int vParent = graph[v].parent;
+			
+			if(graph[v].layer % 2 == 1){
+				
+				graph[v].match = vParent;
+				graph[vParent].match = v;
+			}
+			
+			v = vParent;
+			
+			
+		}
+		
+	}
+	
+}
